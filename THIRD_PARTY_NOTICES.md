@@ -2,7 +2,7 @@
 
 SimpleInit and this derived menu retain LGPL-3.0-or-later terms. The vendored tree includes its libraries and their original notices: LVGL (MIT), NanoSVG (zlib), FreeType (FTL/GPL), stb (MIT/public-domain choice), and other SimpleInit dependencies. File-level notices prevail; this is not a blanket MIT relicensing. See source/simple-init/LICENSE and license files in each library.
 
-WenQuanYi Micro Hei Mono carries Apache-2.0 font metadata (Google 2007; WenQuanYi 2008–2009). Font Awesome Free 5.9.0 font data uses SIL OFL 1.1, with license text in LICENSES/Font-Awesome-5.9.0.txt. The default open fonts remain for upstream fallback, not substitutes for the approved UI typography.
+WenQuanYi Micro Hei Mono carries Apache-2.0 font metadata (Google 2007; WenQuanYi 2008–2009). Font Awesome Free 5.9.0 font data uses SIL OFL 1.1, with upstream notice in LICENSES/Font-Awesome-5.9.0.txt and full terms in LICENSES/OFL-1.1.txt. The default open fonts remain for upstream fallback, not substitutes for the approved UI typography.
 
 edk2 and edk2-sdm845 retain BSD-family and historical notices included in LICENSES and upstream source. Copyright notices in open-source dependencies must remain intact, including notices naming Apple. No proprietary Apple OS image, kernel binary, framework or SDK is shipped here.
 
