@@ -5,7 +5,7 @@
 本项目基于 [dipper-xnu](https://github.com/youzjuzi/dipper-xnu)、SimpleInit 与 edk2-sdm845 的已有工作，整理本机完成的引导界面和验证结果。iOS 内核及驱动移植的主要上游贡献不属于本项目原创。
 
 <p align="center">
-  <img src="assets/previews/approved-final.png" alt="双系统引导界面" width="400">
+  <img src="assets/previews/approved-final.png" alt="双系统引导界面" width="500">
   <br>
   <sub>小米 8 · iOS 16.5 · 双系统引导界面</sub>
 </p>
