@@ -1,0 +1,22 @@
+{
+  "edk2_port": {
+    "url": "https://github.com/edk2-porting/edk2-sdm845.git",
+    "commit": "e1952621f419f8db60ed28271264e1b5184c571d"
+  },
+  "edk2": {
+    "url": "https://github.com/tianocore/edk2.git",
+    "commit": "e7aac7fc137e247edad22f7ee53b9a1fba227397"
+  },
+  "edk2_platforms": {
+    "url": "https://github.com/tianocore/edk2-platforms.git",
+    "commit": "982212662c71b6c734b7578526071d6b78da3bcc"
+  },
+  "simpleinit": {
+    "url": "https://github.com/BigfootACA/simple-init.git",
+    "commit": "29e062805776db5ab7a61d07ef040d43aed71161"
+  },
+  "dipper_xnu_reference": {
+    "url": "https://github.com/youzjuzi/dipper-xnu.git",
+    "commit": "d96d9d5c8bac1302be2fd30f0140b56d65430dbf"
+  }
+}

@@ -1,0 +1,7 @@
+# LOCAL input only. Never commit or redistribute the generated font data.
+FILE FREEFORM = e71a7a5c-8196-4d48-b641-09d21a13bdf4 {
+  SECTION RAW = $(HERCULES_PRIVATE_FONT_DIR)/hercules-ui-regular.ttf
+}
+FILE FREEFORM = 30c1b010-8e7b-48a7-bd44-6978cf57d210 {
+  SECTION RAW = $(HERCULES_PRIVATE_FONT_DIR)/hercules-ui-bold.ttf
+}

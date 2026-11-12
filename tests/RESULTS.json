@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-12",
+  "portable_host_render_tests": "PASS",
+  "address_sanitizer": "PASS",
+  "svg_geometry_and_colors_preserved": "PASS",
+  "original_supplied_svgs": "retained byte-for-byte",
+  "public_external_font_firmware_on_device": "NOT RETESTED",
+  "private_integrated_ui_on_device": "user accepted",
+  "font_inputs": "local only; excluded from repository and Release",
+  "public_source_module_rebuild": "PASS",
+  "synthetic_read_only_tool_checks": "PASS",
+  "build_path_remapping": "PASS"
+}

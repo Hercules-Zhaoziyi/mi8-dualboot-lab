@@ -1,0 +1,110 @@
+[
+  {
+    "attachment": "56b199ecb801ac81e8830ca2060ff02f.png",
+    "published_as": "assets/previews/approved-final.png",
+    "status": "included; metadata removed, image pixels unchanged"
+  },
+  {
+    "attachment": "af11ea2aed1095b9e26877abb5db37a2.jpg",
+    "published_as": "attachments/oversized-icons.jpg",
+    "status": "included; metadata removed, image pixels unchanged"
+  },
+  {
+    "attachment": "caae1e629751035a13fd4a87058aaa00.jpg",
+    "published_as": "attachments/stale-selection.jpg",
+    "status": "included; metadata removed, image pixels unchanged"
+  },
+  {
+    "attachment": "7898ef90714ae0b0674622af2d6c8cb0.jpg",
+    "published_as": "attachments/early-menu.jpg",
+    "status": "included; metadata removed, image pixels unchanged"
+  },
+  {
+    "attachment": "cbd05af67f129410a220743d17d729ad.jpg",
+    "published_as": "attachments/storage-limit.jpg",
+    "status": "included; metadata removed, image pixels unchanged"
+  },
+  {
+    "attachment": "4ae2ac586076629b4736b9934bce7825.jpg",
+    "status": "not found locally"
+  },
+  {
+    "attachment": "5bca5ca98845b7ec7103d07a5f124c1d.jpg",
+    "status": "not found locally"
+  },
+  {
+    "attachment": "40bf6e8262aaf0384084c69b57a21c0c.jpg",
+    "status": "not found locally"
+  },
+  {
+    "attachment": "4cc74d96462173c8f694cc91a8e4d39c.jpg",
+    "status": "not found locally"
+  },
+  {
+    "attachment": "8f7ff0a6bcf86e07bb9f3b2ebca020fe.jpg",
+    "published_as": "attachments/loader-logo.jpg",
+    "status": "included; metadata removed, image pixels unchanged"
+  },
+  {
+    "attachment": "10f4d35698892eb3229a05bd9f60755b.jpg",
+    "published_as": "attachments/loader-entry.jpg",
+    "status": "included; metadata removed, image pixels unchanged"
+  },
+  {
+    "attachment": "4aea97c79a8800eb392bee35ea8e61d6.jpg",
+    "published_as": "attachments/loader-entry-later.jpg",
+    "status": "included; metadata removed, image pixels unchanged"
+  },
+  {
+    "attachment": "codex-clipboard-0caa5465-d861-4bb6-ad27-e2ad11afbc5e.png",
+    "published_as": "attachments/design-reference.png",
+    "status": "included; metadata removed, image pixels unchanged"
+  },
+  {
+    "attachment": "codex-clipboard-8f67d9bb-1ed2-4c9f-a679-f4b81a4d579c.png",
+    "published_as": "attachments/footer-feedback.png",
+    "status": "included; metadata removed, image pixels unchanged"
+  },
+  {
+    "attachment": "codex-clipboard-e0564f7a-55fd-442f-bbc2-51a5a10d38c8.png",
+    "published_as": "attachments/usb-error.png",
+    "status": "included; metadata removed, image pixels unchanged"
+  },
+  {
+    "attachment": "codex-clipboard-4d346251-e788-4547-9eb5-ccd49386bdb8.png",
+    "published_as": "attachments/i4-not-detected.png",
+    "status": "included; metadata removed, image pixels unchanged"
+  },
+  {
+    "attachment": "codex-clipboard-5c797adc-4e03-48bb-9136-537dbe5bcf80.jpg",
+    "status": "not found locally"
+  },
+  {
+    "attachment": "15461ae381a0512c9e5393589388293c.jpg",
+    "status": "excluded: device identity or network information in image"
+  },
+  {
+    "attachment": "a3ec84c5ef703972e06bf53110d65181.jpg",
+    "status": "excluded: device identity or network information in image"
+  },
+  {
+    "attachment": "da1f872c5ad07298d7a29a9d9ecc6d21.jpg",
+    "status": "excluded: device identity or network information in image"
+  },
+  {
+    "attachment": "c3df7da5770d29a50f7409037587b2d6.jpg",
+    "status": "excluded: device identity or network information in image"
+  },
+  {
+    "attachment": "codex-clipboard-9d4c4f1b-fb3b-494e-bd0c-ed99bf029dd9.png",
+    "status": "excluded: device identity or network information in image"
+  },
+  {
+    "attachment": "酷安16.4去广告版.ipa",
+    "status": "excluded: third-party proprietary application; no redistribution"
+  },
+  {
+    "attachment": "小红书_9.44.1去广告版.ipa",
+    "status": "excluded: third-party proprietary application; no redistribution"
+  }
+]

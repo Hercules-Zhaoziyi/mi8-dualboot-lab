@@ -1,0 +1,11 @@
+# Merge into your compatible host FV, not a phone partition.
+# Required library instances/PCDs and SimpleInit package includes are in the DSC.
+INF src/main/SimpleInitMain.inf
+INF Platform/RenegadePkg/Application/Reboot2PayloadApp/Reboot2PayloadApp.inf
+FILE FREEFORM = 4b0364cf-1c5b-47aa-9073-d7b5039ce49b {
+  SECTION RAW = $(HERCULES_PUBLIC_CONFIG_DIR)/simpleinit.static.uefi.cfg
+  SECTION UI = "simpleinit.static.uefi.cfg"
+}
+# Add Fonts.private.fdf.inc.example with local authorized resources.
+# Keep your existing compatible XNU loader (GUID d82f808b-ecca-4bb8-8e9f-9b9bafc490f5)
+# and Android BootShim integration; neither OS payload is supplied here.
