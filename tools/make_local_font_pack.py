@@ -9,7 +9,7 @@ GUIDS={'regular':'e71a7a5c-8196-4d48-b641-09d21a13bdf4','bold':'30c1b010-8e7b-48
 def main():
  p=argparse.ArgumentParser(description=__doc__);p.add_argument('--regular',type=Path,required=True);p.add_argument('--bold',type=Path,required=True);p.add_argument('--out',type=Path,default=Path('local/fonts'));p.add_argument('--base-tools',type=Path);a=p.parse_args()
  repo=Path(__file__).resolve().parents[1];out=a.out.resolve();assert out.is_relative_to((repo/'local').resolve()),'Private outputs must be under this repository local/'
- out.mkdir(parents=True,exist_ok=True);source=repo/'source/simple-init/src/gui/interface/core/bootmenu_hercules.inc';points=set(range(32,127))|{ord(c) for c in source.read_text() if ord(c)>127};report={}
+ out.mkdir(parents=True,exist_ok=True);source=repo/'source/simple-init/src/gui/interface/core/bootmenu_hercules.inc';points=set(range(32,127))|{ord(c) for c in (source.read_text()+(source.parent/"hercules_target.h").read_text()) if ord(c)>127};report={}
  for name,src in [('regular',a.regular),('bold',a.bold)]:
   font=TTFont(src,fontNumber=0,recalcTimestamp=False);flags=font['OS/2'].fsType
   if flags&0x102:raise SystemExit('Input embedding/subsetting flags require a different authorized font')

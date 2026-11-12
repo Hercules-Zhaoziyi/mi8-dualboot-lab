@@ -1,0 +1,16 @@
+{
+  "device": "replace-with-codename",
+  "validation": "unverified",
+  "primary": {
+    "id": "android",
+    "label": "Android",
+    "version": "Your Android build",
+    "efi_guid": null
+  },
+  "secondary": {
+    "id": "secondary",
+    "label": "Secondary OS",
+    "version": "Your validated EFI target",
+    "efi_guid": null
+  }
+}

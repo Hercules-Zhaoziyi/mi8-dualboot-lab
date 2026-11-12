@@ -10,3 +10,7 @@
 - 公开组件使用本地字体资源提供层，不发布替换字体外观或私有字库。
 
 公开封装属于实验性组件，模块构建与主机回归通过；具体设备验证范围见 `docs/VALIDATION.md`。
+
+## Unreleased — Agent reproduction and portable menu source
+
+Added AGENTS workflow, pinned iOS port reference fetcher, full stage-by-stage install/integration guidance, profile generator and evidence templates. Menu labels/target IDs are configurable and GOP-sized layouts accept non-Mi8 resolutions. Default artwork unchanged. Other devices and new scaling paths need validation; existing v0.1.0 artifacts are unchanged.

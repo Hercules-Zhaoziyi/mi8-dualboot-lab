@@ -1,0 +1,10 @@
+{
+  "default_mi8_ui_asan_regression": "PASS",
+  "aarch64_module_build": "PASS",
+  "profile_missing_guid_rejected": "PASS",
+  "profile_valid_header_syntax": "PASS",
+  "local_composer": "syntax/help checked; end-to-end NOT RETESTED",
+  "other_device_hardware": "NOT TESTED",
+  "non_native_resolution_visual_regression": "NOT TESTED",
+  "apple_os_payloads_added": false
+}

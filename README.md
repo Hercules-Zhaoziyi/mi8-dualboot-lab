@@ -62,3 +62,8 @@ Release 提供 AArch64 UI 应用 `HerculesBootMenu.efi`、同 GUID 的 `.ffs` �
 
 
 固件卷集成还需 `HerculesBootConfig.ffs`（GUID `4b0364cf-1c5b-47aa-9073-d7b5039ce49b`）；它封装公开的 `simpleinit.static.uefi.cfg`，用于启用同款界面、10 秒默认 Android 和两个入口。单独复制 UI 应用不会自动加载这些配置。
+
+
+## Agent 复刻与其他机型
+
+从 [AGENTS.md](AGENTS.md) 开始，阅读 [AI agent 协议](docs/AGENT-REPRODUCTION.md)、[从源码到 iOS 刷入](docs/IOS-REPRODUCTION.md) 与 [跨机型适配](docs/PORTING.md)。提供固定上游获取工具、阶段证据模板和通用菜单目标配置生成器。通用化适用于 UI 与适配方法，不表示所有手机均可运行 iOS。旧 Release 仍是 Mi8 组件；新增通用源码需重建，其他设备未验证。

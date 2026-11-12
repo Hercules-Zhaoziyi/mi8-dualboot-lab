@@ -1,0 +1,15 @@
+{
+  "device_identity": "LOCAL ONLY",
+  "stage": "discover",
+  "source_commits": {},
+  "input_sha256": {},
+  "backup_verification": null,
+  "layout_review": null,
+  "commands": [],
+  "device_observations": [],
+  "authorization_scope": "record actual owner instructions locally",
+  "blockers": [],
+  "host_tests": {},
+  "device_tests": {},
+  "ready_to_flash": false
+}

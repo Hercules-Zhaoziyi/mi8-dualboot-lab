@@ -5,6 +5,7 @@
 #include "gui/font.h"
 #endif
 #include "src/misc/lv_txt.h"
+#include "hercules_target.h"
 static int bootmenu_legacy_draw(void);
 struct hercules_advanced;
 static void hercules_show_advanced(void *data);
@@ -72,7 +73,7 @@ static void hercules_select(struct hercules_menu *menu, unsigned index) {
         lv_obj_set_style_border_width(menu->control[i],i==index?3:2,0);
         lv_obj_set_style_border_width(menu->control[i],i==index?3:2,LV_STATE_FOCUSED);
     }
-    lv_label_set_text(menu->launch_text,index==0?"启动 Android":index==1?"启动 iOS":"高级选项");
+    lv_label_set_text(menu->launch_text,index==0?"启动 " HERCULES_TARGET_0_LABEL:index==1?"启动 " HERCULES_TARGET_1_LABEL:"高级选项");
 }
 
 static void hercules_countdown_tick(lv_timer_t *timer) {
@@ -89,7 +90,7 @@ static void hercules_countdown_tick(lv_timer_t *timer) {
     unsigned seconds=(10000-elapsed+999)/1000;
     if(seconds!=menu->countdown_seconds){
         menu->countdown_seconds=seconds;
-        lv_label_set_text_fmt(menu->countdown_text,"%u 秒后自动启动 Android",seconds);
+        lv_label_set_text_fmt(menu->countdown_text,"%u 秒后自动启动 " HERCULES_TARGET_0_LABEL,seconds);
     }
 }
 
@@ -373,10 +374,10 @@ static lv_obj_t *hercules_logo(lv_obj_t *parent,const char *name,int x,int y,int
 static int bootmenu_hercules_draw(void) {
     if (!confd_get_boolean("boot.hercules_skin", false)) return -1;
     /* Assets are calibrated to the dipper framebuffer; other modes keep the classic UI. */
-    if (gui_sw != 1080 || gui_sh != 2248) return -1;
+    if (gui_sw < 320 || gui_sh < 480) return -1;
     struct hercules_menu *menu = calloc(1, sizeof(*menu));
     if (!menu) return -1;
-    const char *names[] = {"android", "ios"};
+    const char *names[] = {HERCULES_TARGET_0_ID, HERCULES_TARGET_1_ID};
     for (unsigned i = 0; i < 2; i++) {
         boot_config *config = boot_get_config((char *)names[i]);
         if (!config) { free(menu); return -1; }
@@ -395,6 +396,13 @@ static int bootmenu_hercules_draw(void) {
     menu->background = hercules_image(menu->root, "bg.jpg", 0, 0);
     if (((lv_img_t *)menu->background)->w != 1080 || ((lv_img_t *)menu->background)->h != 2248) {
         lv_obj_del(menu->root); free(menu); return -1;
+    }
+    if(gui_sw!=1080 || gui_sh!=2248){
+        unsigned zx=((unsigned)gui_sw*256+1079)/1080,zy=((unsigned)gui_sh*256+2247)/2248;
+        unsigned zoom=zx>zy?zx:zy;
+        lv_img_set_pivot(menu->background,0,0);
+        lv_img_set_zoom(menu->background,zoom);
+        lv_obj_set_pos(menu->background,(gui_sw-(int)(1080*zoom/256))/2,(gui_sh-(int)(2248*zoom/256))/2);
     }
     lv_obj_add_event_cb(menu->root, hercules_release, LV_EVENT_DELETE, menu);
     lv_obj_add_event_cb(menu->root, hercules_root_pressed, LV_EVENT_PRESSED, menu);
@@ -429,8 +437,8 @@ static int bootmenu_hercules_draw(void) {
     menu->logo[0]=hercules_logo(menu->control[0],"hercules-android.svg",hercules_x(47),hercules_y(37),189,166);
     menu->logo[1]=hercules_logo(menu->control[1],"hercules-apple.svg",hercules_x(66),hercules_y(43),132,154);
     for(unsigned i=0;i<2;i++){
-        hercules_caption(menu->control[i],i==0?"Android":"iOS",hercules_font(menu,H_CHOICE),238,54,400,0x20242c,false);
-        hercules_caption(menu->control[i],i==0?"MIUI 12.5":"iOS 16.5",hercules_font(menu,H_VERSION),238,126,400,0x758092,false);
+        hercules_caption(menu->control[i],i==0?HERCULES_TARGET_0_LABEL:HERCULES_TARGET_1_LABEL,hercules_font(menu,H_CHOICE),238,54,400,0x20242c,false);
+        hercules_caption(menu->control[i],i==0?HERCULES_TARGET_0_VERSION:HERCULES_TARGET_1_VERSION,hercules_font(menu,H_VERSION),238,126,400,0x758092,false);
         static const lv_point_t points[]={{0,17},{17,33},{50,0}};
         menu->check[i]=lv_line_create(menu->control[i]);lv_line_set_points(menu->check[i],points,3);lv_obj_set_pos(menu->check[i],hercules_x(678),hercules_y(88));lv_obj_set_style_line_color(menu->check[i],lv_color_hex(0x007bff),0);lv_obj_set_style_line_width(menu->check[i],hercules_x(8),0);lv_obj_set_style_line_rounded(menu->check[i],true,0);lv_obj_clear_flag(menu->check[i],LV_OBJ_FLAG_CLICKABLE);
     }
@@ -440,7 +448,7 @@ static int bootmenu_hercules_draw(void) {
     menu->launch_text=hercules_caption(menu->control[3],"启动 iOS",hercules_font(menu,H_ACTION),0,35,760,0xffffff,true);
     hercules_caption(menu->root,"音量键选择 · 电源键启动",hercules_font(menu,H_HINT),42,1597,762,0x626c7b,true);
     hercules_footer(menu->root,menu);
-    menu->countdown_text=hercules_caption(menu->root,"10 秒后自动启动 Android",hercules_font(menu,H_SMALL),42,1654,762,0x8591a3,true);
+    menu->countdown_text=hercules_caption(menu->root,"10 秒后自动启动 " HERCULES_TARGET_0_LABEL,hercules_font(menu,H_SMALL),42,1654,762,0x8591a3,true);
     lv_obj_set_hidden(menu->countdown_text,true);
     lv_group_set_editing(gui_grp, false);
     lv_group_set_wrap(gui_grp, true);

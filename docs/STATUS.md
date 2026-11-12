@@ -23,3 +23,8 @@
 - Apple 标准 USB 管理传输；当前调试接口不能直接替代爱思/iTunes 所需协议。
 
 降低渲染分辨率等上游可选优化不能当成默认稳定配置；本机默认保持原生分辨率。上游的最新边界应同时查阅 [dipper-xnu](https://github.com/youzjuzi/dipper-xnu)。
+
+
+## Agent 复刻与通用源码扩展
+
+新增固定上游复刻入口、阶段验收、Mi8 双启动汇编和本地组合打包实现；菜单目标/版本文字可配置，解除固定 GOP 尺寸限制。默认 Mi8 UI ASAN 回归及 AArch64 模块构建通过；profile 的缺失 GUID 拒绝和生成 header 语法检查通过。其他分辨率视觉、其他手机硬件与新组合脚本端到端仍未测。v0.1.0 Release 未替换；新源码不作为全机型可刷固件宣传。详见 AGENT-PORTING-RESULTS.json。
