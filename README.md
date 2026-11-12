@@ -1,4 +1,4 @@
-# Hercules Mi8 Dual-Boot Lab
+# Mi8 Dual-Boot Lab
 
 小米 8（`dipper`）双系统引导界面、构建工具与设备实验记录。
 
