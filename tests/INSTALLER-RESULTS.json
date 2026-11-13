@@ -1,0 +1,8 @@
+{
+  "backend_unit_tests": 4,
+  "result": "PASS",
+  "phone_commands_executed": false,
+  "windows_gui": "NOT TESTED",
+  "new_device_end_to_end": "NOT TESTED",
+  "first_install_partitioning": "NOT IMPLEMENTED"
+}

@@ -67,3 +67,8 @@ Release 提供 AArch64 UI 应用 `HerculesBootMenu.efi`、同 GUID 的 `.ffs` �
 ## Agent 复刻与其他机型
 
 从 [AGENTS.md](AGENTS.md) 开始，阅读 [AI agent 协议](docs/AGENT-REPRODUCTION.md)、[从源码到 iOS 刷入](docs/IOS-REPRODUCTION.md) 与 [跨机型适配](docs/PORTING.md)。提供固定上游获取工具、阶段证据模板和通用菜单目标配置生成器。通用化适用于 UI 与适配方法，不表示所有手机均可运行 iOS。旧 Release 仍是 Mi8 组件；新增通用源码需重建，其他设备未验证。
+
+
+## Windows 安装维护向导（开发预览）
+
+[Mi8 Install Desk](installer/README.md) 提供图形化设备核验、校验下载、TWRP 临时启动、备份和 boot/recovery 写入回读。当前不包含首次重分区及完整系统构建的一键自动化；未做全新电脑/第二台设备端到端验收。不要将其当作完整一键 iOS 安装器。
