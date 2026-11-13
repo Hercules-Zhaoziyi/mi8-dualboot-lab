@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "device": "dipper",
+  "mode": "existing-install",
+  "resources": {
+    "twrp": {
+      "url": "https://your-authorized-source.invalid/twrp.img",
+      "sha256": "REPLACE_WITH_TRUSTED_SHA256",
+      "filename": "twrp-dipper.img"
+    },
+    "boot": {
+      "url": "https://your-private-source.invalid/boot.img",
+      "sha256": "REPLACE_WITH_DEVICE_SPECIFIC_SHA256",
+      "filename": "boot-local.img"
+    }
+  },
+  "twrp": "twrp",
+  "candidate": "boot"
+}

@@ -21,3 +21,24 @@ Windows 11 图形向导，Python 3.11+ 标准库/Tk，无 pip 依赖。双击 St
 这是可运行的维护向导开发版，**还不是从原厂空白设备全自动安装 iOS 的一键软件**。首次 GPT 重分区、原厂 Android 数据迁移、自动 Apple 输入获取/SDK安装、完整 WSL内核/用户空间构建、首次 darwin 写入和原厂救砖尚未集成。遇到这些步骤必须转到项目工程流程，不伪造成功。没有全新电脑或第二台 Mi8 的端到端测试，不能保证“所有情况”。软件也不检测任意危险候选中的内核语义；刷入前必须完成对应工程验证。
 
 工作目录可放 D/E 等有空间的磁盘。状态恢复只保留日志与备份，不自动重放任何写入。操作超时不会保证远端 dd 已停止，需读取状态和分区后再恢复。镜像下载失败保留 .part，摘要不符停止，不自动替换版本。所有备份与输入在 local/ 中，不随发布包分发。
+
+
+## 一键入口与分阶段工作流
+
+双击 `Install.cmd`：缺少 Python 时通过系统 winget 安装官方 Python 包（需本机处理许可/UAC）；自动从 Google 官方 SDK 仓库元数据选取 Windows Platform Tools，按元数据提供的 SHA1/SHA256 校验后解压，并保存 SHA256 收据。Google 元数据和 ZIP 使用 HTTPS；这不是独立数字签名认证。准备模式不接触手机。下载存在摘要不一致即停止，不信任已有不明文件。
+
+默认使用 `%LOCALAPPDATA%/HerculesMi8Install`；可换 D/E 盘：
+
+```powershell
+powershell -NoProfile -File installer/Install.ps1 -Work D:\Mi8Install
+```
+
+已有 iOS 布局、已有对应设备完整boot候选的用户，可复制 existing-install.template.json 到私有目录，填自己合法来源与可信 SHA256；TWRP 必须按 TeamWin 条款从页面获取，不提供硬编码下载直链。然后：
+
+```powershell
+powershell -NoProfile -File installer/Install.ps1 -Plan D:\private\install.json -Work D:\Mi8Install -Apply
+```
+
+工作流串联准备 → FASTBOOT身份/BL → 临时TWRP → boot/recovery备份 → 候选RAM启动 → 实机验收 → 回TWRP → 明确确认写boot → 回读。中途需要处理授权弹窗和物理按键；状态记录不会自动重放写入。计划改变要求新工作目录。首次重分区/系统构建仍拒绝执行；尚未提供可分发的完整iOS整包，因此不能宣称原厂手机双击即可完成全部安装。当前一键入口默认只做环境准备，不刷机。
+
+软件不会用菜单的 EFI/FFS Release 冒充完整boot。首装需要先完成 docs/IOS-REPRODUCTION.md 的合法输入、编译、布局、完整数据/GPT备份与镜像组合。下一阶段必须补齐经过独立设备验证的首次分区适配器，才可开放首装写入。现有更新工作流也不自动备份全部用户数据，操作前必须单独完成。

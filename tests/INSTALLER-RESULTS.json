@@ -1,8 +1,10 @@
 {
-  "backend_unit_tests": 4,
+  "date": "2026-11-13",
+  "backend_and_workflow_tests": 10,
   "result": "PASS",
   "phone_commands_executed": false,
-  "windows_gui": "NOT TESTED",
-  "new_device_end_to_end": "NOT TESTED",
-  "first_install_partitioning": "NOT IMPLEMENTED"
+  "windows_gui_and_winget": "NOT TESTED",
+  "new_computer_end_to_end": "NOT TESTED",
+  "first_install_partitioning": "BLOCKED: no validated adapter",
+  "default_entry": "preparation only; no phone contact"
 }

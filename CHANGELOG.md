@@ -14,3 +14,7 @@
 ## Unreleased — Agent reproduction and portable menu source
 
 Added AGENTS workflow, pinned iOS port reference fetcher, full stage-by-stage install/integration guidance, profile generator and evidence templates. Menu labels/target IDs are configurable and GOP-sized layouts accept non-Mi8 resolutions. Default artwork unchanged. Other devices and new scaling paths need validation; existing v0.1.0 artifacts are unchanged.
+
+## Unreleased — Windows installer development preview
+
+Added one-click preparation launcher, official SDK metadata checksum download, cached tool integrity receipts, resumable explicit plans, device binding, TWRP RAM boot, boot/recovery backup, RAM acceptance and guarded boot update. First-install partition migration remains disabled. Ten backend/workflow tests pass without phone operations; Windows GUI and clean-computer/second-device end-to-end remain untested.
