@@ -40,6 +40,16 @@ typedef struct RESET_DATA_TYPE{
 	UINT8 Bdata;
 }RESET_DATA_TYPE;
 
+#ifdef HERCULES_DIPPER_REBOOT_MODES
+#include "hercules_dipper_pon.h"
+const char *hercules_dipper_reboot_diagnostic(void){
+    static char text[256];
+    snprintf(text,sizeof(text),"Mode request failed; stayed in menu.\nphase=%d errno=%d\nver=%08x count=%u ch=%u owner=%u\ntype=%u subtype=%u old=%02x",h_dd.phase,errno,h_dd.version,h_dd.count,h_dd.channel,h_dd.owner,h_dd.type,h_dd.subtype,h_dd.old);
+    return text;
+}
+
+#endif
+
 int adv_reboot(enum reboot_cmd cmd,char*data){
 	UINTN s=0;
 	VOID*x=NULL;
@@ -73,8 +83,40 @@ int adv_reboot(enum reboot_cmd cmd,char*data){
 			//fallthrough
 		default:ERET(EINVAL);
 	}
+#ifdef HERCULES_DIPPER_REBOOT_MODES
+    /* Xiaomi dipper DTB: shared IMEM 0x146BF000, restart_reason offset 0x65c.
+     * Xiaomi dipper-p-oss msm-poweroff.c uses these mode values.
+     * This is a dipper-only experimental adapter: PSCI alone discards ResetData.
+     * Do not apply these physical addresses to another device.
+     * No EDL/download-mode flags are touched.
+     */
+    if(cmd==REBOOT_RECOVERY || cmd==REBOOT_FASTBOOT){
+        int error=hercules_dipper_pon_reason(cmd==REBOOT_RECOVERY?1:2);
+        if(error){errno=-error;return -1;}
+        volatile UINT32 *reason=(volatile UINT32 *)(UINTN)0x146BF65C;
+        UINT32 value=cmd==REBOOT_RECOVERY?0x77665502:0x77665500;
+        *reason=value;
+        MemoryFence();
+        if(*reason!=value)ERET(EIO);
+    }
+#endif
 	if(rdt.Bdata!=0)t=EfiResetCold,x=&rdt,s=sizeof(rdt);
+#ifdef HERCULES_DIPPER_REBOOT_MODES
+    if(cmd==REBOOT_POWEROFF || cmd==REBOOT_HALT){
+        int error=hercules_dipper_shutdown_prepare();
+        if(error){errno=-error;return -1;}
+        error=hercules_dipper_shutdown_drop();
+        errno=-error;return -1;
+    }
+#endif
 	gRT->ResetSystem(t,rt,s,x);
+#ifdef HERCULES_DIPPER_REBOOT_MODES
+    if(cmd==REBOOT_POWEROFF || cmd==REBOOT_HALT){
+        int error=hercules_dipper_shutdown_restore();
+        if(error){errno=-error;return -1;}
+    }
+#endif
+
 	ERET(EINVAL);
 }
 

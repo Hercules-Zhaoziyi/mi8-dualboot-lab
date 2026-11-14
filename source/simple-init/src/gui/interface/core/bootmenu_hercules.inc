@@ -5,7 +5,14 @@
 #include "gui/font.h"
 #endif
 #include "src/misc/lv_txt.h"
-#include "hercules_target.h"
+#if defined(HERCULES_DIPPER_REBOOT_MODES) && !defined(HERCULES_HOST_TEST)
+#include "system.h"
+extern const char *hercules_dipper_reboot_diagnostic(void);
+#endif
+#if defined(HERCULES_FTS_TRACE_DIAGNOSTIC) && !defined(HERCULES_HOST_TEST)
+#include <Library/UefiBootServicesTableLib.h>
+#include <Protocol/HerculesFtsProbe.h>
+#endif
 static int bootmenu_legacy_draw(void);
 struct hercules_advanced;
 static void hercules_show_advanced(void *data);
@@ -33,6 +40,32 @@ struct hercules_menu {
 static lv_coord_t hercules_x(int value) { return (lv_coord_t)((int64_t)value * gui_sw / 846); }
 static lv_coord_t hercules_y(int value) { return (lv_coord_t)((int64_t)value * gui_sh / 1858); }
 
+#include "hercules_tap_guard.h"
+static struct hercules_tap_guard hercules_tap;
+#if defined(ENABLE_UEFI) && !defined(HERCULES_HOST_TEST)
+extern uint32_t hercules_uefi_pointer_sequence(void);
+#endif
+static bool hercules_pointer_event(lv_event_t *e){
+ lv_indev_t *input=lv_indev_get_act();
+ if(!input||lv_indev_get_type(input)!=LV_INDEV_TYPE_POINTER)return true;
+ /* Pointer focus is preview only. Keyboard focus retains one-key selection. */
+ if(e->code==LV_EVENT_FOCUSED)return false;
+ unsigned kind=0;
+ switch(e->code){case LV_EVENT_PRESSED:kind=H_TAP_DOWN;break;case LV_EVENT_PRESSING:kind=H_TAP_MOVE;break;case LV_EVENT_PRESS_LOST:kind=H_TAP_LOST;break;case LV_EVENT_RELEASED:kind=H_TAP_UP;break;case LV_EVENT_CLICKED:kind=H_TAP_CLICK;break;default:return true;}
+ uint32_t sequence;
+#if defined(HERCULES_TEST_TAP_SEQUENCE)
+ sequence=HERCULES_TEST_TAP_SEQUENCE;
+#elif defined(ENABLE_UEFI) && !defined(HERCULES_HOST_TEST)
+ sequence=hercules_uefi_pointer_sequence();
+#else
+ /* Other backends may supply a raw-contact sequence through the adapter. */
+ static uint32_t fallback;if(kind==H_TAP_DOWN)fallback++;sequence=fallback;
+#endif
+ lv_point_t point;lv_area_t area;lv_indev_get_point(input,&point);lv_obj_get_coords(e->target,&area);
+ bool accepted=hercules_tap_update(&hercules_tap,sequence,(uintptr_t)e->target,kind,point.x,point.y,area.x1,area.y1,area.x2,area.y2,hercules_x(14),lv_indev_get_scroll_obj(input)!=NULL);
+ return kind!=H_TAP_CLICK||accepted;
+}
+static void hercules_tap_forget(void){hercules_tap=(struct hercules_tap_guard){0};}
 static void hercules_cancel_countdown(struct hercules_menu *menu,bool interacted) {
     if(interacted)hercules_user_interacted=true;
     if(menu->countdown){lv_timer_del(menu->countdown);menu->countdown=NULL;}
@@ -41,7 +74,7 @@ static void hercules_cancel_countdown(struct hercules_menu *menu,bool interacted
 
 static void hercules_root_pressed(lv_event_t *event) {
     struct hercules_menu *menu=event->user_data;
-    if(menu&&!menu->leaving)hercules_cancel_countdown(menu,true);
+    if(menu&&!menu->leaving){hercules_cancel_countdown(menu,true);(void)hercules_pointer_event(event);}
 }
 
 static void hercules_free_menu(void *data) {
@@ -51,6 +84,7 @@ static void hercules_free_menu(void *data) {
 }
 static void hercules_release(lv_event_t *event) {
     struct hercules_menu *menu=event->user_data;
+    hercules_tap_forget();
     menu->leaving=true;
     hercules_cancel_countdown(menu,false);
     /* LVGL deletes children after the parent's DELETE event. Remove focus first,
@@ -73,7 +107,7 @@ static void hercules_select(struct hercules_menu *menu, unsigned index) {
         lv_obj_set_style_border_width(menu->control[i],i==index?3:2,0);
         lv_obj_set_style_border_width(menu->control[i],i==index?3:2,LV_STATE_FOCUSED);
     }
-    lv_label_set_text(menu->launch_text,index==0?"启动 " HERCULES_TARGET_0_LABEL:index==1?"启动 " HERCULES_TARGET_1_LABEL:"高级选项");
+    lv_label_set_text(menu->launch_text,index==0?"启动 Android":index==1?"启动 iOS":"高级选项");
 }
 
 static void hercules_countdown_tick(lv_timer_t *timer) {
@@ -90,7 +124,7 @@ static void hercules_countdown_tick(lv_timer_t *timer) {
     unsigned seconds=(10000-elapsed+999)/1000;
     if(seconds!=menu->countdown_seconds){
         menu->countdown_seconds=seconds;
-        lv_label_set_text_fmt(menu->countdown_text,"%u 秒后自动启动 " HERCULES_TARGET_0_LABEL,seconds);
+        lv_label_set_text_fmt(menu->countdown_text,"%u 秒后自动启动 Android",seconds);
     }
 }
 
@@ -105,11 +139,13 @@ struct hercules_advanced {
     char folder[64];
 };
 
+static void hercules_free_advanced_context(void *data){free(data);}
 static void hercules_advanced_free(lv_event_t *event) {
     struct hercules_advanced *page = event->user_data;
     lv_group_remove_all_objs(gui_grp);
     /* Font ownership belongs to the main page and is shared across both pages. */
-    free(page);
+    page->leaving=true;
+    lv_async_call(hercules_free_advanced_context,page);
 }
 
 static void hercules_main_focus(struct hercules_menu *menu) {
@@ -211,6 +247,7 @@ static void hercules_footer(lv_obj_t *root,struct hercules_menu *main) {
 }
 
 static void hercules_advanced_back(void *data) {
+    hercules_tap_forget();
     struct hercules_advanced *page = data;
     struct hercules_menu *main = page->main;
     char parent[64] = {0};
@@ -230,6 +267,7 @@ static void hercules_advanced_back(void *data) {
 }
 
 static void hercules_advanced_enter_folder(void *data) {
+    hercules_tap_forget();
     struct hercules_advanced *page = data;
     struct hercules_menu *main = page->main;
     char folder[64]; strncpy(folder, page->bm.selected->cfg.ident, sizeof(folder)); folder[63]=0;
@@ -241,13 +279,31 @@ static void hercules_advanced_enter_folder(void *data) {
 }
 
 static void hercules_advanced_event(lv_event_t *event) {
+    if(event->code!=LV_EVENT_PRESSED&&event->code!=LV_EVENT_PRESSING&&event->code!=LV_EVENT_PRESS_LOST&&event->code!=LV_EVENT_RELEASED&&event->code!=LV_EVENT_CLICKED&&event->code!=LV_EVENT_FOCUSED)return;
     struct hercules_advanced *page = event->user_data;
-    if (!page || page->leaving || event->code != LV_EVENT_CLICKED) return;
+    if(!page||page->leaving)return;
+    bool pointer_ok=hercules_pointer_event(event);
+    if(hercules_tap.cancelled&&(event->code==LV_EVENT_PRESS_LOST||event->code==LV_EVENT_RELEASED||event->code==LV_EVENT_CLICKED)&&lv_indev_get_act()&&lv_indev_get_type(lv_indev_get_act())==LV_INDEV_TYPE_POINTER)lv_group_focus_obj(page->back);
+    if(!pointer_ok||event->code!=LV_EVENT_CLICKED)return;
     page->leaving = true;
     if (event->target == page->back) { lv_async_call(hercules_advanced_back, page); return; }
     for (unsigned i=0; i<page->count; i++) if (event->target == page->row[i]) {
         page->bm.selected = &page->items[i];
         if (page->items[i].cfg.mode == BOOT_FOLDER) lv_async_call(hercules_advanced_enter_folder, page);
+#if defined(HERCULES_DIPPER_REBOOT_MODES) && !defined(HERCULES_HOST_TEST)
+        else if(!strcmp(page->items[i].cfg.ident,"bootloader") || !strcmp(page->items[i].cfg.ident,"recovery") || !strcmp(page->items[i].cfg.ident,"poweroff")){
+            adv_reboot(!strcmp(page->items[i].cfg.ident,"poweroff")?REBOOT_POWEROFF:(!strcmp(page->items[i].cfg.ident,"recovery")?REBOOT_RECOVERY:REBOOT_FASTBOOT),NULL);
+            page->leaving=false;
+            lv_obj_t *panel=lv_obj_create(page->root);
+            lv_obj_set_pos(panel,hercules_x(42),hercules_y(520));
+            lv_obj_set_size(panel,hercules_x(762),hercules_y(850));
+            lv_obj_set_style_bg_color(panel,lv_color_hex(0xf4f5fa),0);
+            lv_obj_set_style_bg_opa(panel,LV_OPA_COVER,0);
+            lv_obj_clear_flag(panel,LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_CLICKABLE);
+            hercules_caption(panel,hercules_dipper_reboot_diagnostic(),hercules_font(page->main,H_SMALL),20,30,700,0xa02020,false);
+            lv_group_set_editing(gui_grp,false);lv_group_focus_obj(page->back);
+        }
+#endif
         else lv_async_call(bootmenu_boot, &page->bm);
         return;
     }
@@ -283,12 +339,30 @@ static void hercules_show_advanced(void *data) {
     lv_obj_clear_flag(page->root,LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_add_flag(page->root,LV_OBJ_FLAG_CLICKABLE);
     lv_obj_add_event_cb(page->root,hercules_advanced_free,LV_EVENT_DELETE,page);
+    lv_obj_add_event_cb(page->root,hercules_advanced_event,LV_EVENT_PRESSED,page);
     lv_obj_t *wall=lv_img_create(page->root);lv_img_set_src(wall,"bg.jpg");lv_obj_clear_flag(wall,LV_OBJ_FLAG_CLICKABLE);lv_obj_set_pos(wall,0,0);
     page->heading=main->font[H_HEADING];page->normal=main->font[H_SUBTITLE];page->small=main->font[H_SMALL];page->button=main->font[H_ACTION];
     const char *heading="高级选项",*english="Advanced options";
     if(!strcmp(page->folder,"reboots")){heading="重启与关机";english="Reboot & power";}
     else if(!strcmp(page->folder,"uefi-bootmenu")){heading="UEFI 启动管理";english="UEFI Boot Menu";}
     hercules_header(page->root,main,heading,english);
+#if defined(HERCULES_FTS_TRACE_DIAGNOSTIC) && !defined(HERCULES_HOST_TEST)
+    EFI_GUID fts_guid=HERCULES_FTS_PROBE_GUID;HERCULES_FTS_PROBE *fts=NULL;char fts_text[96];
+    if(!EFI_ERROR(gBS->LocateProtocol(&fts_guid,NULL,(void**)&fts))&&fts&&fts->Revision==1){
+        if(fts->Stage>=10)snprintf(fts_text,sizeof(fts_text),"FTS s%u rc%u r%x t%u:%x/%x p%x",fts->Stage,fts->Status,fts->RpmAddress,fts->TcsIndex,fts->SlotStatus,fts->SlotControl,fts->Pins);
+        else snprintf(fts_text,sizeof(fts_text),"FTS s%u rc%u p%x id%02x%02x%02x ev%u",fts->Stage,fts->Status,fts->Pins,fts->Id[0],fts->Id[1],fts->Id[2],fts->Events);
+    }else snprintf(fts_text,sizeof(fts_text),"FTS probe unavailable");
+    hercules_caption(page->root,fts_text,hercules_font(main,H_SMALL),42,215,762,0x747b89,true);
+#endif
+
+#if defined(HERCULES_CHARGER_TRACE_DIAGNOSTIC) && !defined(HERCULES_HOST_TEST)
+    const volatile unsigned int *boot_trace=(const volatile unsigned int *)(uintptr_t)0x17FE00000;
+    char boot_trace_text[64];
+    if(boot_trace[0]==0x43484730)snprintf(boot_trace_text,sizeof(boot_trace_text),"Boot flags: %02x",boot_trace[1]);
+    else snprintf(boot_trace_text,sizeof(boot_trace_text),"Boot trace unavailable");
+    hercules_caption(page->root,boot_trace_text,hercules_font(main,H_SMALL),42,185,762,0x747b89,true);
+#endif
+
     char **names=confd_ls("boot.configs");
     if(names){
         for(size_t i=0;names[i] && page->count<32;i++){
@@ -299,6 +373,7 @@ static void hercules_show_advanced(void *data) {
         if(names[0])free(names[0]);free(names);
     }
     lv_obj_t *listbox=lv_obj_create(page->root);lv_obj_remove_style_all(listbox);lv_obj_set_pos(listbox,0,hercules_y(530));lv_obj_set_size(listbox,gui_sw,hercules_y(850));lv_obj_set_scroll_dir(listbox,LV_DIR_VER);lv_obj_set_scrollbar_mode(listbox,LV_SCROLLBAR_MODE_OFF);
+    lv_obj_add_event_cb(listbox,hercules_advanced_event,LV_EVENT_PRESSED,page);
     for(unsigned i=0;i<page->count;i++){
         boot_config *cfg=&page->items[i].cfg;
         lv_obj_t *row=page->row[i]=lv_btn_create(listbox);hercules_glass(row,false);lv_obj_set_pos(row,hercules_x(42),hercules_y(i*166+8));lv_obj_set_size(row,hercules_x(762),hercules_y(138));
@@ -306,12 +381,12 @@ static void hercules_show_advanced(void *data) {
         hercules_caption(row,number,page->small,30,42,64,0x6e91bc,true);
         hercules_caption(row,hercules_advanced_name(cfg),page->normal,120,25,575,0x283340,false);
         hercules_caption(row,cfg->desc,page->small,120,83,575,0x7c8798,false);
-        lv_obj_add_event_cb(row,hercules_advanced_event,LV_EVENT_CLICKED,page);lv_group_add_obj(gui_grp,row);
+        lv_obj_add_event_cb(row,hercules_advanced_event,LV_EVENT_ALL,page);lv_group_add_obj(gui_grp,row);
     }
     page->back=lv_btn_create(page->root);hercules_glass(page->back,true);lv_obj_set_pos(page->back,hercules_x(44),hercules_y(1450));lv_obj_set_size(page->back,hercules_x(760),hercules_y(113));
     hercules_caption(page->back,page->folder[0]?"返回上一页":"返回首页",page->button,0,35,760,0xffffff,true);
-    lv_obj_add_event_cb(page->back,hercules_advanced_event,LV_EVENT_CLICKED,page);lv_group_add_obj(gui_grp,page->back);lv_group_set_editing(gui_grp,false);lv_group_focus_obj(page->back);
-    hercules_caption(page->root,"音量键选择 · 电源键确认",page->normal,42,1597,762,0x626c7b,true);
+    lv_obj_add_event_cb(page->back,hercules_advanced_event,LV_EVENT_ALL,page);lv_group_add_obj(gui_grp,page->back);lv_group_set_editing(gui_grp,false);lv_group_focus_obj(page->back);
+    hercules_caption(page->root,"触屏或按键操作",page->normal,42,1597,762,0x626c7b,true);
     hercules_footer(page->root,main);
 }
 
@@ -321,6 +396,9 @@ static void hercules_control_event(lv_event_t *event) {
     unsigned index;
     for (index = 0; index < 4; index++) if (event->target == menu->control[index]) break;
     if (index == 4) return;
+    bool pointer_ok=hercules_pointer_event(event);
+    if(hercules_tap.cancelled&&(event->code==LV_EVENT_PRESS_LOST||event->code==LV_EVENT_RELEASED||event->code==LV_EVENT_CLICKED)&&lv_indev_get_act()&&lv_indev_get_type(lv_indev_get_act())==LV_INDEV_TYPE_POINTER)lv_group_focus_obj(menu->control[menu->active_choice<3?menu->active_choice:menu->selected]);
+    if(!pointer_ok)return;
     if(event->code==LV_EVENT_PRESSED||event->code==LV_EVENT_KEY){hercules_cancel_countdown(menu,true);return;}
     if (event->code == LV_EVENT_FOCUSED) {
         if(lv_indev_get_act())hercules_cancel_countdown(menu,true);
@@ -374,10 +452,10 @@ static lv_obj_t *hercules_logo(lv_obj_t *parent,const char *name,int x,int y,int
 static int bootmenu_hercules_draw(void) {
     if (!confd_get_boolean("boot.hercules_skin", false)) return -1;
     /* Assets are calibrated to the dipper framebuffer; other modes keep the classic UI. */
-    if (gui_sw < 320 || gui_sh < 480) return -1;
+    if (gui_sw != 1080 || gui_sh != 2248) return -1;
     struct hercules_menu *menu = calloc(1, sizeof(*menu));
     if (!menu) return -1;
-    const char *names[] = {HERCULES_TARGET_0_ID, HERCULES_TARGET_1_ID};
+    const char *names[] = {"android", "ios"};
     for (unsigned i = 0; i < 2; i++) {
         boot_config *config = boot_get_config((char *)names[i]);
         if (!config) { free(menu); return -1; }
@@ -396,13 +474,6 @@ static int bootmenu_hercules_draw(void) {
     menu->background = hercules_image(menu->root, "bg.jpg", 0, 0);
     if (((lv_img_t *)menu->background)->w != 1080 || ((lv_img_t *)menu->background)->h != 2248) {
         lv_obj_del(menu->root); free(menu); return -1;
-    }
-    if(gui_sw!=1080 || gui_sh!=2248){
-        unsigned zx=((unsigned)gui_sw*256+1079)/1080,zy=((unsigned)gui_sh*256+2247)/2248;
-        unsigned zoom=zx>zy?zx:zy;
-        lv_img_set_pivot(menu->background,0,0);
-        lv_img_set_zoom(menu->background,zoom);
-        lv_obj_set_pos(menu->background,(gui_sw-(int)(1080*zoom/256))/2,(gui_sh-(int)(2248*zoom/256))/2);
     }
     lv_obj_add_event_cb(menu->root, hercules_release, LV_EVENT_DELETE, menu);
     lv_obj_add_event_cb(menu->root, hercules_root_pressed, LV_EVENT_PRESSED, menu);
@@ -428,17 +499,14 @@ static int bootmenu_hercules_draw(void) {
             lv_obj_set_style_border_width(button, 3, LV_STATE_FOCUSED);
             lv_obj_set_style_border_color(button, lv_color_hex(i == 2 ? 0x007bff : 0xffffff), LV_STATE_FOCUSED);
         }
-        lv_obj_add_event_cb(button, hercules_control_event, LV_EVENT_FOCUSED, menu);
-        lv_obj_add_event_cb(button, hercules_control_event, LV_EVENT_CLICKED, menu);
-        lv_obj_add_event_cb(button, hercules_control_event, LV_EVENT_PRESSED, menu);
-        lv_obj_add_event_cb(button, hercules_control_event, LV_EVENT_KEY, menu);
+        lv_obj_add_event_cb(button, hercules_control_event, LV_EVENT_ALL, menu);
         lv_group_add_obj(gui_grp, button);
     }
     menu->logo[0]=hercules_logo(menu->control[0],"hercules-android.svg",hercules_x(47),hercules_y(37),189,166);
     menu->logo[1]=hercules_logo(menu->control[1],"hercules-apple.svg",hercules_x(66),hercules_y(43),132,154);
     for(unsigned i=0;i<2;i++){
-        hercules_caption(menu->control[i],i==0?HERCULES_TARGET_0_LABEL:HERCULES_TARGET_1_LABEL,hercules_font(menu,H_CHOICE),238,54,400,0x20242c,false);
-        hercules_caption(menu->control[i],i==0?HERCULES_TARGET_0_VERSION:HERCULES_TARGET_1_VERSION,hercules_font(menu,H_VERSION),238,126,400,0x758092,false);
+        hercules_caption(menu->control[i],i==0?"Android":"iOS",hercules_font(menu,H_CHOICE),238,54,400,0x20242c,false);
+        hercules_caption(menu->control[i],i==0?"MIUI 12.5":"iOS 16.5",hercules_font(menu,H_VERSION),238,126,400,0x758092,false);
         static const lv_point_t points[]={{0,17},{17,33},{50,0}};
         menu->check[i]=lv_line_create(menu->control[i]);lv_line_set_points(menu->check[i],points,3);lv_obj_set_pos(menu->check[i],hercules_x(678),hercules_y(88));lv_obj_set_style_line_color(menu->check[i],lv_color_hex(0x007bff),0);lv_obj_set_style_line_width(menu->check[i],hercules_x(8),0);lv_obj_set_style_line_rounded(menu->check[i],true,0);lv_obj_clear_flag(menu->check[i],LV_OBJ_FLAG_CLICKABLE);
     }
@@ -446,9 +514,9 @@ static int bootmenu_hercules_draw(void) {
     hercules_caption(menu->control[2],"高级选项",hercules_font(menu,H_ADVANCED),112,33,575,0x303744,false);
     hercules_caption(menu->control[2],">",hercules_font(menu,H_VERSION),696,32,42,0x6d7787,true);
     menu->launch_text=hercules_caption(menu->control[3],"启动 iOS",hercules_font(menu,H_ACTION),0,35,760,0xffffff,true);
-    hercules_caption(menu->root,"音量键选择 · 电源键启动",hercules_font(menu,H_HINT),42,1597,762,0x626c7b,true);
+    hercules_caption(menu->root,"触屏或按键操作",hercules_font(menu,H_HINT),42,1597,762,0x626c7b,true);
     hercules_footer(menu->root,menu);
-    menu->countdown_text=hercules_caption(menu->root,"10 秒后自动启动 " HERCULES_TARGET_0_LABEL,hercules_font(menu,H_SMALL),42,1654,762,0x8591a3,true);
+    menu->countdown_text=hercules_caption(menu->root,"10 秒后自动启动 Android",hercules_font(menu,H_SMALL),42,1654,762,0x8591a3,true);
     lv_obj_set_hidden(menu->countdown_text,true);
     lv_group_set_editing(gui_grp, false);
     lv_group_set_wrap(gui_grp, true);
@@ -458,11 +526,15 @@ static int bootmenu_hercules_draw(void) {
     menu->leaving=false;
     hercules_select(menu, selected);
     lv_group_focus_obj(menu->control[selected]);
+#ifndef HERCULES_RAM_NO_COUNTDOWN
     if(!hercules_user_interacted&&!no_autoboot){
         menu->countdown_started=lv_tick_get();menu->countdown_seconds=10;
         lv_obj_set_hidden(menu->countdown_text,false);
         menu->countdown=lv_timer_create(hercules_countdown_tick,100,menu);
     }
+#else
+    (void)hercules_countdown_tick; /* retained for default builds */
+#endif
     tlog_notice("Hercules native boot menu ready: 10-second Android autoboot; first input cancels for this boot");
     return 0;
 }

@@ -30,40 +30,36 @@ static list*touchs;
 static lv_indev_drv_t drv;
 static lv_indev_t*dev;
 static INT64 lx=0,ly=0;
+static bool last_down=false;
+static uint32_t touch_sequence=0;
+uint32_t hercules_uefi_pointer_sequence(void){return touch_sequence;}
+#include "hercules_pointer_state.h"
 struct input_data{
 	INT64 lx,ly,rx,ry;
+ struct hercules_pointer_cache cached;
 	EFI_ABSOLUTE_POINTER_PROTOCOL*touch;
 	void*pd;
 };
 
 static void touch_read(lv_indev_drv_t*indev_drv,lv_indev_data_t*data){
-	list*l,*n;
-	EFI_ABSOLUTE_POINTER_STATE p;
-	if(indev_drv!=&drv||!dev||dev->driver!=indev_drv)return;
-	if(!(l=list_first(touchs))){
-		tlog_warn("no available touch screen devices");
-		lv_indev_enable(dev,false);
-		return;
-	}else do{
-		n=l->next;
-		LIST_DATA_DECLARE(d,l,struct input_data*);
-		if(!d->pd)d->pd=d->touch->GetState;
-		else if(d->touch->GetState!=d->pd){
-			tlog_warn("GetState changed, disable touch device");
-			list_obj_del(&touchs,l,list_default_free);
-			continue;
-		}
-		if(EFI_ERROR(d->touch->GetState(d->touch,&p)))continue;
-		if(p.CurrentX==d->lx&&p.CurrentY==d->ly)continue;
-		lx=((double)p.CurrentX/(double)d->rx)*gui_w;
-		ly=((double)p.CurrentY/(double)d->ry)*gui_h;
-		d->lx=p.CurrentX,d->ly=p.CurrentY;
-		data->state=LV_INDEV_STATE_PR;
-		data->continue_reading=true;
-		break;
-	}while((l=n));
-	data->point.x=lx;
-	data->point.y=ly;
+ list*l,*n;EFI_ABSOLUTE_POINTER_STATE p;
+ data->state=last_down?LV_INDEV_STATE_PR:LV_INDEV_STATE_REL;
+ data->point.x=lx;data->point.y=ly;data->continue_reading=false;
+ if(indev_drv!=&drv||!dev||dev->driver!=indev_drv)return;
+ if(!(l=list_first(touchs))){lv_indev_enable(dev,false);return;}
+ do{
+  n=l->next;LIST_DATA_DECLARE(d,l,struct input_data*);
+  if(!d->pd)d->pd=d->touch->GetState;
+  else if(d->touch->GetState!=d->pd){list_obj_del(&touchs,l,list_default_free);continue;}
+  EFI_STATUS status=d->touch->GetState(d->touch,&p);
+  if(EFI_ERROR(status)){if(status!=EFI_NOT_READY){lv_indev_wait_release(dev);last_down=false;data->state=LV_INDEV_STATE_REL;}continue;}
+  EFI_ABSOLUTE_POINTER_MODE *m=d->touch->Mode;
+  if(!hercules_pointer_update(&d->cached,p.CurrentX,p.CurrentY,p.ActiveButtons,m->AbsoluteMinX,m->AbsoluteMaxX,m->AbsoluteMinY,m->AbsoluteMaxY,gui_w,gui_h))continue;
+  if(d->cached.down&&!last_down){touch_sequence++;if(!touch_sequence)touch_sequence++;}
+  lx=d->cached.x;ly=d->cached.y;last_down=d->cached.down;
+  data->state=last_down?LV_INDEV_STATE_PR:LV_INDEV_STATE_REL;
+  data->point.x=lx;data->point.y=ly;data->continue_reading=true;break;
+ }while((l=n));
 }
 static bool proto_cmp(list*f,void*data){
 	LIST_DATA_DECLARE(d,f,struct input_data*);
@@ -79,9 +75,11 @@ static int _touch_register(EFI_ABSOLUTE_POINTER_PROTOCOL*touch){
 		tlog_debug("skip uefi touch %p",touch);
 		return 0;
 	}
+	if(!touch->Mode || touch->Mode->AbsoluteMaxX<=touch->Mode->AbsoluteMinX || touch->Mode->AbsoluteMaxY<=touch->Mode->AbsoluteMinY)return -1;
 	if(!(data=malloc(sizeof(struct input_data))))return -1;
 	memset(data,0,sizeof(struct input_data));
 	data->touch=touch;
+ (void)touch->Reset(touch,FALSE);
 	data->rx=data->touch->Mode->AbsoluteMaxX;
 	data->ry=data->touch->Mode->AbsoluteMaxY;
 	tlog_debug("found new uefi absolute %p",data->touch);
