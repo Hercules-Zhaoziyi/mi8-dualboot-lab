@@ -17,6 +17,8 @@ unset XNU_PAYLOAD
 mkdir -p "$WORKSPACE/Conf" "$SI/build"
 cp "$PORT/tools/tools_def.txt" "$WORKSPACE/Conf/tools_def.txt"
 cp "$PORT/tools/build_rule.txt" "$WORKSPACE/Conf/build_rule.txt"
+cp -a "$REPO/source/device-adapters/dipper/Platform/." "$PORT/Platform/"
+cp -a "$REPO/source/device-adapters/dipper/Silicon/." "$PORT/Silicon/"
 cp "$REPO/source/edk2-integration/HerculesUiOnly.dsc" "$PORT/Platform/Xiaomi/sdm845/HerculesUiOnly.dsc"
 for catalog in "$SI"/po/*.po; do
   name=$(basename "$catalog" .po)
@@ -29,7 +31,7 @@ set +u
 source "$EDK/edksetup.sh"
 set -u
 make -C "$EDK/BaseTools" -j6
-for module in src/main/SimpleInitMain.inf Platform/RenegadePkg/Application/Reboot2PayloadApp/Reboot2PayloadApp.inf; do
+for module in src/main/SimpleInitMain.inf Platform/RenegadePkg/Application/Reboot2PayloadApp/Reboot2PayloadApp.inf Platform/Xiaomi/sdm845/Drivers/HerculesFtsDxe/HerculesFtsDxe.inf; do
   build -s -n 6 -a AARCH64 -t CLANG38 -p "$PORT/Platform/Xiaomi/sdm845/HerculesUiOnly.dsc" -m "$module" -b RELEASE \
     -D HERCULES_SI_ROOT="$SI" -D HERCULES_PORT_ROOT="$PORT" -D FIRMWARE_VER=public-ui-v0.1.0 -D USE_UART=0 -D FIX_CLANG=1 -D NO_EXCEPTION_DISPLAY=0 \
     -D FD_BASE=0xCE000000 -D FD_SIZE=0x00700000 -D ENABLE_LINUX_UTILS=1

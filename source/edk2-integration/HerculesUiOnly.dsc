@@ -14,7 +14,7 @@
 !include Platform/Qualcomm/sdm845/sdm845.dsc
 
 [BuildOptions.common]
-  GCC:*_*_AARCH64_CC_FLAGS = -DENABLE_SIMPLE_INIT -DENABLE_LINUX_SIMPLE_MASS_STORAGE -DHERCULES_EXTERNAL_UI_FONTS=1 -ffile-prefix-map=$(HERCULES_SI_ROOT)=simple-init -ffile-prefix-map=$(HERCULES_PORT_ROOT)=edk2-port
+  GCC:*_*_AARCH64_CC_FLAGS = -DENABLE_SIMPLE_INIT -DENABLE_LINUX_SIMPLE_MASS_STORAGE -DHERCULES_EXTERNAL_UI_FONTS=1 -DHERCULES_DIPPER_REBOOT_MODES=1 -ffile-prefix-map=$(HERCULES_SI_ROOT)=simple-init -ffile-prefix-map=$(HERCULES_PORT_ROOT)=edk2-port
 
 [PcdsFixedAtBuild.common]
   gQcomTokenSpaceGuid.PcdMipiFrameBufferWidth|1080
@@ -26,3 +26,5 @@
 
 [Components.common]
   Platform/RenegadePkg/Application/Reboot2PayloadApp/Reboot2PayloadApp.inf
+
+  Platform/Xiaomi/sdm845/Drivers/HerculesFtsDxe/HerculesFtsDxe.inf

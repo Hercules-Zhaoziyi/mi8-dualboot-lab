@@ -10,6 +10,13 @@ def main():
  for stem,source,guid in [('HerculesBootMenu','SimpleInitMain.efi',UI),('AndroidHandoff','Reboot2PayloadApp.efi',ANDROID)]:
   target=a.out/(stem+'.efi');subprocess.run([str(tools/'GenFw'),'-z','-o',str(target),str(build/source)],check=True);check_pe(target);target.with_suffix(".txt").unlink(missing_ok=True)
   sec=a.out/(stem+'.pe32');subprocess.run([str(tools/'GenSec'),'-s','EFI_SECTION_PE32','-o',str(sec),str(target)],check=True);ffs=a.out/(stem+'.ffs');subprocess.run([str(tools/'GenFfs'),'-t','EFI_FV_FILETYPE_APPLICATION','-g',guid,'-s','-i',str(sec),'-o',str(ffs)],check=True);assert ffs.read_bytes()[:16]==uuid.UUID(guid).bytes_le;sec.unlink()
+ target=a.out/'HerculesFtsDxe.efi';subprocess.run([str(tools/'GenFw'),'-z','-o',str(target),str(build/'HerculesFtsDxe.efi')],check=True);check_pe(target)
+ target.with_suffix('.txt').unlink(missing_ok=True)
+ sec=a.out/'fts.pe32';dep=a.out/'fts.depex';rawdep=a.out/'fts.depraw';rawdep.write_bytes(bytes([6,8]))
+ subprocess.run([str(tools/'GenSec'),'-s','EFI_SECTION_PE32','-o',str(sec),str(target)],check=True)
+ subprocess.run([str(tools/'GenSec'),'-s','EFI_SECTION_DXE_DEPEX','-o',str(dep),str(rawdep)],check=True)
+ subprocess.run([str(tools/'GenFfs'),'-t','EFI_FV_FILETYPE_DRIVER','-g','42d50d53-c590-4515-8a50-c21795b0ad6a','-s','-i',str(dep),'-i',str(sec),'-o',str(a.out/'HerculesFtsDxe.ffs')],check=True)
+ for temporary in [sec,dep,rawdep]:temporary.unlink()
  cfg=repo/'source/edk2-integration/simpleinit.static.uefi.cfg';shutil.copyfile(cfg,a.out/cfg.name);raw=a.out/'config.raw';ui=a.out/'config.ui'
  subprocess.run([str(tools/'GenSec'),'-s','EFI_SECTION_RAW','-o',str(raw),str(cfg)],check=True);subprocess.run([str(tools/'GenSec'),'-s','EFI_SECTION_USER_INTERFACE','-n',cfg.name,'-o',str(ui)],check=True);subprocess.run([str(tools/'GenFfs'),'-t','EFI_FV_FILETYPE_FREEFORM','-g',CONFIG,'-s','-i',str(raw),'-i',str(ui),'-o',str(a.out/'HerculesBootConfig.ffs')],check=True);raw.unlink();ui.unlink()
  report={f.name:{'bytes':f.stat().st_size,'sha256':hashlib.sha256(f.read_bytes()).hexdigest()} for f in a.out.iterdir() if f.is_file() and f.suffix in ['.efi','.ffs','.cfg']};(a.out/'MANIFEST.json').write_text(json.dumps({'format':'UI components only','architecture':'AARCH64','font_mode':'external-local-RAW-FFS','apple_os_payloads':False,'files':report},indent=2));(a.out/'SHA256SUMS').write_text(''.join(v['sha256']+'  '+k+'\n' for k,v in sorted(report.items())));print(json.dumps(report,indent=2))
