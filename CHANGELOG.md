@@ -1,3 +1,8 @@
+## 2026-11-15
+
+- Added from-zero Windows/WSL, fixed input sources, build, TWRP, backup/layout, system installation, RAM verification, dualboot integration and recovery guide.
+- Explicitly advanced dipper-xnu reference from d96d9d5 to f7cd0f0 and recorded source document hashes; no system files or device writes included.
+
 > 2026-11-14：新增触屏、模式切换、关机/充电修复源码及[验证与限制](docs/UPDATES-2026-11-14.md)。存在正式/临时版本启动回归，先阅读该记录。
 
 # 更新记录

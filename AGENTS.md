@@ -9,3 +9,5 @@ Obey the owner's actual authorization. Complete read-only inventory, backup vali
 Keep all Apple system inputs/SDKs, private firmware, IPA files, archives, logs and font software in local/. No credentials or device identifiers in commits. Do not download arbitrary binaries to replace missing source builds. Follow the pinned upstream instructions and preserve notices. Before public release run tools/audit_publication.py; explicitly stage reviewed paths, never git add .
 
 For each stage write local/runs/<id>/report.json with input hashes, tool versions, actual commands, exit codes, observed evidence and unresolved issues. Distinguish host-tested, device-tested and planned. Never claim a completed flash based on fastboot OKAY alone. Do not silently change pinned versions or write a fixed-address generic flasher.
+
+Read docs/FROM-ZERO.md and docs/MATERIALS.json before reproduction. Inventory local inputs before asking for missing paths. Report the exact failed stage; a menu-only boot is not an iOS installation. Never claim this guide has a fresh-device end-to-end certification.
